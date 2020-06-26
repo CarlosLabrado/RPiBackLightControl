@@ -106,7 +106,7 @@ class BackLightControl:
                 for x in range(half_hour_diff):
                     print('brightness at {}'.format(brightness), flush=True)
                     if brightness < 10:
-                        bl.set_power(False)  # turn off the display
+                        bl.power = False  # turn off the display
                     else:
                         if brightness == 10:
                             brightness = 11  # 11 is the min brightness
