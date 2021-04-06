@@ -53,35 +53,44 @@ class BackLightControl:
 
         while True:
 
-            bl = Backlight()
+            try:
 
-            now = pendulum.now()
-            print('Current time is {0}'.format(now.to_day_datetime_string()), flush=True)
+                bl = Backlight()
 
-            difference = now.diff(self.last_check, False).in_hours()
+                now = pendulum.now()
+                print('Current time is {0}'.format(now.to_day_datetime_string()), flush=True)
 
-            if difference > 10:
-                self.check_for_sunset_sunrise(day=now)
+                difference = now.diff(self.last_check, False).in_hours()
 
-            hour = now.hour
-            seconds_to_sleep = 600
-            if (now > self.wake_time) and (now < self.sleep_time):
-                print('It\'s time to wake up!', flush=True)
-                bl.power = True
-                bl.brightness = 50
-                # lets always sleep 10 minutes instead
-                # seconds_to_sleep = self.calculate_sleep_time_in_seconds(now_time=now, later_time=self.sleep_time)
-                print('program sleeping for {0} minutes'.format(seconds_to_sleep / 60), flush=True)
+                if difference > 10:
+                    self.check_for_sunset_sunrise(day=now)
 
-            elif now >= self.sleep_time:
-                print('Night time!', flush=True)
-                self.decrease_brightness(hour, 22)
-                # we check for tomorrow instead of today
-                self.check_for_sunset_sunrise(day=now.add(days=1))
-                # lets always sleep 10 minutes instead
-                # seconds_to_sleep = self.calculate_sleep_time_in_seconds(now_time=now, later_time=self.wake_time)
-            print('Sleeping {0} seconds'.format(seconds_to_sleep), flush=True)
-            time.sleep(seconds_to_sleep)
+                hour = now.hour
+                seconds_to_sleep = 600
+                if self.wake_time is not None and self.sleep_time is not None:
+                    if (now > self.wake_time) and (now < self.sleep_time):
+                        print('It\'s time to wake up!', flush=True)
+                        bl.power = True
+                        bl.brightness = 50
+                        # lets always sleep 10 minutes instead
+                        # seconds_to_sleep = self.calculate_sleep_time_in_seconds(now_time=now, later_time=self.sleep_time)
+                        print('program sleeping for {0} minutes'.format(seconds_to_sleep / 60), flush=True)
+
+                    elif now >= self.sleep_time:
+                        print('Night time!', flush=True)
+                        self.decrease_brightness(hour, 22)
+                        # we check for tomorrow instead of today
+                        self.check_for_sunset_sunrise(day=now.add(days=1))
+                        # lets always sleep 10 minutes instead
+                        # seconds_to_sleep = self.calculate_sleep_time_in_seconds(now_time=now, later_time=self.wake_time)
+                    print('Sleeping {0} seconds'.format(seconds_to_sleep), flush=True)
+                    time.sleep(seconds_to_sleep)
+                else:
+                    # re initialize because times are NONE
+                    self.check_for_sunset_sunrise(day=now)
+
+            except Exception as e:
+                print('Error running main_app : {0}'.format(e))
 
     def calculate_sleep_time_in_seconds(self, now_time, later_time):
         minutes_to_sleep = now_time.diff(later_time, False).in_minutes()
@@ -116,7 +125,9 @@ class BackLightControl:
                         brightness = brightness - 10
                         print('sleeping 30 minutes...', flush=True)
                         time.sleep(60 * 30)
-
+        elif finish_hour == start_hour:
+            bl = Backlight()
+            bl.power = False
         else:
             raise Exception('the finish hour should be bigger than the start hour')
 
