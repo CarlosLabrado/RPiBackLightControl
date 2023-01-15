@@ -19,3 +19,10 @@ sudo crontab -e
 ```shell script
 @reboot python3 /home/pi/BackLightPy/test.py >> /home/pi/BackLightPy/my.log 2>&1
 ```
+
+Install poetry
+%APPDATA%\Python\Scripts
+
+```shell
+
+```
