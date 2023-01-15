@@ -1,3 +1,5 @@
+from typing import Optional
+
 from rpi_backlight import Backlight
 import time
 import pendulum
@@ -8,10 +10,11 @@ class BackLightControl:
     wake_time = None
     sleep_time = None
     last_check = None
+    backlight = None
 
-    def __init__(self):
+    def __init__(self, backlight: Optional = None):
         print('initializing back light program...', flush=True)
-        self.backlight = Backlight()
+        self.backlight = backlight or Backlight()
         now = pendulum.now()
         self.check_for_sunset_sunrise(day=now)
 
@@ -49,44 +52,38 @@ class BackLightControl:
         except Exception as e:
             print('there was an error getting the sunrise from the api: {0}'.format(e), flush=True)
 
-    def main_app(self):
+    def main_app(self) -> bool:
 
-        while True:
+        try:
 
-            try:
+            now = pendulum.now()
+            print('Current time is {0}'.format(now.to_day_datetime_string()), flush=True)
 
-                now = pendulum.now()
-                print('Current time is {0}'.format(now.to_day_datetime_string()), flush=True)
+            difference = now.diff(self.last_check, False).in_hours()
 
-                difference = now.diff(self.last_check, False).in_hours()
+            if difference > 10:
+                self.check_for_sunset_sunrise(day=now)
 
-                if difference > 10:
-                    self.check_for_sunset_sunrise(day=now)
+            hour = now.hour
+            if self.wake_time and self.sleep_time:
+                if (now > self.wake_time) and (now < self.sleep_time):
+                    print('It\'s time to wake up!', flush=True)
+                    self.backlight.power = True
+                    self.backlight.brightness = 50
+                elif now >= self.sleep_time:
+                    print('Night time!', flush=True)
+                    self.decrease_brightness(hour, 22)
+                    # we check for tomorrow instead of today
+                    self.check_for_sunset_sunrise(day=now.add(days=1))
 
-                hour = now.hour
-                seconds_to_sleep = 600
-                if self.wake_time is not None and self.sleep_time is not None:
-                    if (now > self.wake_time) and (now < self.sleep_time):
-                        print('It\'s time to wake up!', flush=True)
-                        self.backlight.power = True
-                        self.backlight.brightness = 50
-                        # let's always sleep 10 minutes instead
-                        print('program sleeping for {0} minutes'.format(seconds_to_sleep / 60), flush=True)
+                return True  # sleep
+            else:
+                # re-initialize because times are NONE
+                self.check_for_sunset_sunrise(day=now)
+                return False  # don't sleep
 
-                    elif now >= self.sleep_time:
-                        print('Night time!', flush=True)
-                        self.decrease_brightness(hour, 22)
-                        # we check for tomorrow instead of today
-                        self.check_for_sunset_sunrise(day=now.add(days=1))
-                        # let's always sleep 10 minutes instead
-                    print('Sleeping {0} seconds'.format(seconds_to_sleep), flush=True)
-                    time.sleep(seconds_to_sleep)
-                else:
-                    # re-initialize because times are NONE
-                    self.check_for_sunset_sunrise(day=now)
-
-            except Exception as e:
-                print('Error running main_app : {0}'.format(e))
+        except Exception as e:
+            print('Error running main_app : {0}'.format(e))
 
     @staticmethod
     def calculate_sleep_time_in_seconds(now_time, later_time):
@@ -129,7 +126,14 @@ class BackLightControl:
 
 def main():
     back_light_control = BackLightControl()
-    back_light_control.main_app()
+    while True:
+        seconds_to_sleep = 600
+
+        should_sleep = back_light_control.main_app()
+        if should_sleep:
+            # let's always sleep 10 minutes instead
+            print('Sleeping {0} seconds'.format(seconds_to_sleep), flush=True)
+            time.sleep(seconds_to_sleep)
 
 
 if __name__ == '__main__':
