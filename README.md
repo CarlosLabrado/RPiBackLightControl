@@ -14,15 +14,25 @@ That is a random generator that doesn't need the mouse? because there's not enou
 
 ### Cron tab
 
+Install the package.whl using pip on the terminal
+
 sudo crontab -e
 
 ```shell script
-@reboot python3 /home/pi/BackLightPy/test.py >> /home/pi/BackLightPy/my.log 2>&1
+@reboot /usr/bin/env python /home/pi/.local/bin/backlight_start >> /home/pi/backlight_control/my.log 2>&1
 ```
 
 # New Setup
 
 - Install poetry
+  ** There's an issue when running poetry install through SSH
+  - [1917](https://github.com/python-poetry/poetry/issues/1917)
+  - Fix
+    - ```shell
+      echo 'export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring' >> ~/.bashrc
+      echo 'export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring' >> ~/.profile
+      exec "$SHELL"
+      ```
 
 #### Settings for RPI 7inch screen
 
