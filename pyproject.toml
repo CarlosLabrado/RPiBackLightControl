@@ -17,4 +17,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-thing_cli = "custom_control.main:main"
+backlight_start = "custom_control.main:main"
