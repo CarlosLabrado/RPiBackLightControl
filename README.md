@@ -51,3 +51,34 @@ sudo crontab -e
   - Guess Optimal Character
   - Terminus
   - 10x18
+
+# Systemd
+
+We need to create a `.service` file with:
+```shell
+sudo nano /etc/systemd/system/light_control.service
+```
+
+Place this code inside it:
+```
+[Unit]
+Description=Backlight control
+
+[Service]
+ExecStart=/usr/bin/bash -c "./run.sh"
+User=pi
+WorkingDirectory=/home/pi/backlight_control
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then run these commands to enable it:
+```shell
+sudo systemctl enable light_control.service
+
+sudo systemctl start light_control.service
+
+systemctl status light_control.service
+```
+
